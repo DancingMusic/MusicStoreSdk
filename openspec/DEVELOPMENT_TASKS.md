@@ -34,3 +34,14 @@
   anonymous family member.
 - [x] Verify both releases use host-managed official login flows and never send
   captured credentials to configurable catalog gateways.
+
+## Milestone E — Native mobile discovery
+
+- [x] Extend manifest schema and runtime validation with `ios` and `android`.
+- [x] Audit connector implementations before adding native platform claims.
+- [x] Publish iTunes, Internet Archive, and Radio Browser as the initial
+  credential-free native mobile set.
+- [ ] Validate and document mobile gateway configuration before enabling the
+  NetEase, QQ Music, or KuGou gateway variants on native hosts.
+- [ ] Implement and validate a native authorization flow before enabling the
+  Spotify account variant on native hosts.

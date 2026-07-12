@@ -13,7 +13,7 @@
     "authRequirement": { "enum": ["none", "optional", "required"] },
     "platforms": {
       "type": "array", "minItems": 1, "uniqueItems": true,
-      "items": { "enum": ["web", "desktop"] }
+      "items": { "enum": ["web", "desktop", "ios", "android"] }
     },
     "name": { "type": "string", "minLength": 1 },
     "description": { "type": "string", "minLength": 1 },

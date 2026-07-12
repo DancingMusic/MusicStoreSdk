@@ -47,7 +47,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@dancingmusic/music-connect": "github:DancingMusic/MusicConnect#935e7719975e2fbb9a8f08b77684d76d2f131a3f"
+    "@dancingmusic/music-connect": "github:DancingMusic/MusicConnect#de950569f2f70322f6e05a011931ef74abfefafe"
   },
   "overrides": {
     "esbuild": "0.28.1"
