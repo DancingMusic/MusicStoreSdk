@@ -27,7 +27,8 @@
   },
   "discovery": { "recommendedRegions": ["mainland"], "priority": 90 },
   "tags": ["netease", "account", "official-web-login", "official-provider", "qr-login", "desktop"],
-  "status": "active",
+  "distribution": { "channel": "developer-only" },
+  "status": "unlisted",
   "submittedAt": "2026-07-12T14:15:00.000Z",
   "updatedAt": "2026-07-17T23:35:00.000Z"
 }

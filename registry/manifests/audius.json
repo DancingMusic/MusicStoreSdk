@@ -17,6 +17,7 @@
   "permissions": { "networkOrigins": ["https://api.audius.co"], "account": false },
   "discovery": { "recommendedRegions": ["global"], "priority": 95 },
   "tags": ["audius", "anonymous", "zero-config", "streaming", "playlist"],
+  "distribution": { "channel": "official-authorized", "reviewedAt": "2026-07-27T00:00:00.000Z" },
   "status": "active",
   "submittedAt": "2026-07-13T02:05:00.000Z",
   "updatedAt": "2026-07-13T02:05:00.000Z"

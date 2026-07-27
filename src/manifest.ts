@@ -36,6 +36,12 @@ export interface ConnectorManifestDiscovery {
   priority?: number;
 }
 
+/** Store-reviewed distribution classification; connector code cannot choose it at runtime. */
+export interface ConnectorManifestDistribution {
+  channel: "official-authorized" | "developer-only";
+  reviewedAt?: string;
+}
+
 export interface ConnectorManifest {
   schemaVersion: typeof CONNECTOR_MANIFEST_SCHEMA_VERSION;
   id: string;
@@ -57,6 +63,7 @@ export interface ConnectorManifest {
   publishedAt?: string;
   permissions?: ConnectorManifestPermissions;
   discovery?: ConnectorManifestDiscovery;
+  distribution: ConnectorManifestDistribution;
   tags?: string[];
   status: ConnectorManifestStatus;
   submittedAt: string;
@@ -107,13 +114,14 @@ const TOP_LEVEL_FIELDS = new Set([
   "schemaVersion", "id", "name", "description", "publisher", "repository",
   "homepage", "license", "version", "protocolVersion", "capabilities",
   "artifact", "releaseNotesUrl", "publishedAt", "permissions", "tags", "status", "submittedAt", "updatedAt",
-  "familyId", "variant", "authRequirement", "platforms", "discovery",
+  "familyId", "variant", "authRequirement", "platforms", "discovery", "distribution",
 ]);
 const PUBLISHER_FIELDS = new Set(["name", "url"]);
 const ARTIFACT_FIELDS = new Set(["url", "format", "integrity", "mirrors"]);
 const MIRROR_FIELDS = new Set(["region", "url"]);
 const PERMISSION_FIELDS = new Set(["networkOrigins", "artworkOrigins", "account"]);
 const DISCOVERY_FIELDS = new Set(["recommendedRegions", "priority"]);
+const DISTRIBUTION_FIELDS = new Set(["channel", "reviewedAt"]);
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const SEMVER_RANGE_PATTERN = /^(?:[~^]|>=?|<=?)?\s*(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\s+-\s+(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))?$/;
@@ -372,6 +380,24 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
       if (value.discovery.priority !== undefined && (typeof value.discovery.priority !== "number" || !Number.isInteger(value.discovery.priority) || value.discovery.priority < 0 || value.discovery.priority > 100)) {
         issues.push({ path: "$.discovery.priority", code: "invalid_value", message: "must be an integer from 0 through 100" });
       }
+    }
+  }
+
+  if (!isRecord(value.distribution)) {
+    issues.push({ path: "$.distribution", code: value.distribution === undefined ? "missing_field" : "invalid_type", message: "must be an object" });
+  } else {
+    hasUnknownFields(value.distribution, DISTRIBUTION_FIELDS, "$.distribution", issues);
+    if (value.distribution.channel !== "official-authorized" && value.distribution.channel !== "developer-only") {
+      issues.push({ path: "$.distribution.channel", code: value.distribution.channel === undefined ? "missing_field" : "invalid_value", message: "must equal official-authorized or developer-only" });
+    }
+    if (value.distribution.reviewedAt !== undefined && (typeof value.distribution.reviewedAt !== "string" || Number.isNaN(Date.parse(value.distribution.reviewedAt)) || !value.distribution.reviewedAt.includes("T"))) {
+      issues.push({ path: "$.distribution.reviewedAt", code: "invalid_value", message: "must be an ISO-8601 timestamp" });
+    }
+    if (value.distribution.channel === "official-authorized" && value.status !== "active") {
+      issues.push({ path: "$.distribution.channel", code: "invalid_value", message: "official-authorized records must be active" });
+    }
+    if (value.distribution.channel === "developer-only" && value.status === "active") {
+      issues.push({ path: "$.distribution.channel", code: "invalid_value", message: "developer-only records must be unlisted or deprecated" });
     }
   }
 

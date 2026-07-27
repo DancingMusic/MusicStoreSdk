@@ -18,7 +18,8 @@
   "permissions": { "networkOrigins": [], "account": false },
   "discovery": { "recommendedRegions": ["mainland"], "priority": 80 },
   "tags": ["kugou", "anonymous", "self-hosted-gateway", "lyrics", "playlist"],
-  "status": "active",
+  "distribution": { "channel": "developer-only" },
+  "status": "unlisted",
   "submittedAt": "2026-07-12T00:00:00.000Z",
   "updatedAt": "2026-07-12T00:00:00.000Z"
 }

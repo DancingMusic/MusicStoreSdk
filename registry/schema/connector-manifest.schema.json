@@ -4,7 +4,7 @@
   "title": "DancingMusic connector manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "id", "familyId", "variant", "authRequirement", "platforms", "name", "description", "publisher", "repository", "license", "version", "protocolVersion", "capabilities", "artifact", "status", "submittedAt", "updatedAt"],
+  "required": ["schemaVersion", "id", "familyId", "variant", "authRequirement", "platforms", "name", "description", "publisher", "repository", "license", "version", "protocolVersion", "capabilities", "artifact", "distribution", "status", "submittedAt", "updatedAt"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
@@ -81,6 +81,15 @@
         "priority": { "type": "integer", "minimum": 0, "maximum": 100 }
       }
     },
+    "distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel"],
+      "properties": {
+        "channel": { "enum": ["official-authorized", "developer-only"] },
+        "reviewedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "tags": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "status": { "enum": ["active", "deprecated", "unlisted"] },
     "submittedAt": { "type": "string", "format": "date-time" },
@@ -113,6 +122,14 @@
           "artifact": { "required": ["integrity"] }
         }
       }
+    },
+    {
+      "if": { "properties": { "distribution": { "properties": { "channel": { "const": "official-authorized" } }, "required": ["channel"] } } },
+      "then": { "properties": { "status": { "const": "active" } } }
+    },
+    {
+      "if": { "properties": { "distribution": { "properties": { "channel": { "const": "developer-only" } }, "required": ["channel"] } } },
+      "then": { "properties": { "status": { "enum": ["unlisted", "deprecated"] } } }
     }
   ]
 }

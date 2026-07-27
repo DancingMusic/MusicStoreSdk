@@ -18,7 +18,8 @@
   "permissions": { "networkOrigins": [], "artworkOrigins": ["https://y.gtimg.cn", "https://y.qq.com"], "account": false },
   "discovery": { "recommendedRegions": ["mainland"], "priority": 100 },
   "tags": ["qq-music", "anonymous", "self-hosted-gateway", "playlist"],
-  "status": "active",
+  "distribution": { "channel": "developer-only" },
+  "status": "unlisted",
   "submittedAt": "2026-06-11T00:00:00.000Z",
   "updatedAt": "2026-07-16T00:00:00.000Z"
 }

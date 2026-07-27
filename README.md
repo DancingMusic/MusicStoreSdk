@@ -86,6 +86,9 @@ instances inside a host process.
 Reviewers verify repository ownership, license, protocol compatibility,
 capabilities, permissions, the pinned artifact URL, and its SHA-256 integrity. Never submit cookies,
 tokens, API secrets, signing material, or mutable `@main` distribution URLs.
+Only the reviewer-assigned `official-authorized` channel reaches ordinary host
+discovery. A `developer-only` record stays unlisted and requires an explicit,
+local developer import.
 
 ## Manifest v1
 
@@ -114,6 +117,10 @@ tokens, API secrets, signing material, or mutable `@main` distribution URLs.
     "networkOrigins": ["https://api.example.com"],
     "artworkOrigins": ["https://images.example.com"],
     "account": false
+  },
+  "distribution": {
+    "channel": "official-authorized",
+    "reviewedAt": "2026-07-27T00:00:00.000Z"
   },
   "discovery": { "recommendedRegions": ["global"], "priority": 80 },
   "status": "active",

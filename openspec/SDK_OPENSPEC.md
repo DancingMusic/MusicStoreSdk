@@ -47,6 +47,9 @@ Each registry record MUST declare:
   implementation release timestamp used by update UI. `updatedAt` remains the
   registry-record audit timestamp;
 - `status`: `active`, `deprecated`, or `unlisted`;
+- `distribution`: Store-reviewed `official-authorized` or `developer-only`.
+  Only active `official-authorized` records may reach ordinary host discovery
+  and account-completion onboarding;
 - `submittedAt` and `updatedAt`: ISO-8601 timestamps.
 
 Mirror URLs are subject to the same HTTPS, immutable-version, and no-floating-
@@ -105,7 +108,9 @@ a declared, trusted and bounded credential-processing path.
 4. `npm run build` builds the TypeScript package and regenerates the public
    distribution index.
 5. Reviewers verify repository ownership, permissions, immutable artifact URL,
-   declared capabilities, license, and protocol compatibility.
+   declared capabilities, license, protocol compatibility, and distribution
+   channel. `official-authorized` is an affirmative Store decision, not a
+   brand, user disclaimer, or connector-provided claim.
 
 Artwork review additionally verifies that each declared origin is used by the
 implementation's returned cover URLs and that the implementation does not put

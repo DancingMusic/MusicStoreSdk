@@ -35,6 +35,7 @@ function manifest(id = "example"): ConnectorManifest {
       networkOrigins: ["https://api.example.com"],
       artworkOrigins: ["https://images.example.com"],
     },
+    distribution: { channel: "official-authorized", reviewedAt: "2026-07-27T00:00:00.000Z" },
     tags: ["example"],
     status: "active",
     submittedAt: "2026-07-01T00:00:00.000Z",
@@ -126,6 +127,16 @@ describe("connector manifest validation", () => {
       path: "$.artifact.integrity",
       code: "missing_field",
     }));
+  });
+
+  it("requires a Store-reviewed distribution channel", () => {
+    const missing = manifest();
+    delete (missing as Partial<ConnectorManifest>).distribution;
+    expect(validateConnectorManifest(missing).issues).toContainEqual(expect.objectContaining({ path: "$.distribution", code: "missing_field" }));
+
+    const developerOnly = manifest();
+    developerOnly.distribution = { channel: "developer-only" };
+    expect(validateConnectorManifest(developerOnly).issues).toContainEqual(expect.objectContaining({ path: "$.distribution.channel", code: "invalid_value" }));
   });
 
   it("rejects truncated integrity and versions that only appear outside the path", () => {

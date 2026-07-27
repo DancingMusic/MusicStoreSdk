@@ -18,6 +18,7 @@
   "permissions": { "networkOrigins": ["https://itunes.apple.com", "https://lrclib.net", "https://rss.applemarketingtools.com"] },
   "discovery": { "recommendedRegions": ["global"], "priority": 90 },
   "tags": ["apple", "itunes", "preview"],
+  "distribution": { "channel": "official-authorized", "reviewedAt": "2026-07-27T00:00:00.000Z" },
   "status": "active",
   "submittedAt": "2026-06-11T00:00:00.000Z",
   "updatedAt": "2026-07-12T00:00:00.000Z"
