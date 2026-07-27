@@ -29,6 +29,11 @@ export interface ConnectorManifestPermissions {
   artworkOrigins?: string[];
   /** Whether the connector asks the host to coordinate an account login flow. */
   account?: boolean;
+  /**
+   * Reviewed typed provider-player adapters accepted from a
+   * `managed-playback` connector. This is never a URL or provider credential.
+   */
+  managedPlayback?: { adapterIds: string[] };
 }
 
 export interface ConnectorManifestDiscovery {
@@ -101,6 +106,7 @@ const CAPABILITIES = new Set<MusicConnectorCapability>([
   "recommendations",
   "favorites-read",
   "favorites-write",
+  "managed-playback",
 ]);
 const STATUSES = new Set<ConnectorManifestStatus>(["active", "deprecated", "unlisted"]);
 const TOP_LEVEL_FIELDS = new Set([
@@ -112,7 +118,8 @@ const TOP_LEVEL_FIELDS = new Set([
 const PUBLISHER_FIELDS = new Set(["name", "url"]);
 const ARTIFACT_FIELDS = new Set(["url", "format", "integrity", "mirrors"]);
 const MIRROR_FIELDS = new Set(["region", "url"]);
-const PERMISSION_FIELDS = new Set(["networkOrigins", "artworkOrigins", "account"]);
+const PERMISSION_FIELDS = new Set(["networkOrigins", "artworkOrigins", "account", "managedPlayback"]);
+const MANAGED_PLAYBACK_FIELDS = new Set(["adapterIds"]);
 const DISCOVERY_FIELDS = new Set(["recommendedRegions", "priority"]);
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
@@ -221,8 +228,9 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
   else if (!["none", "optional", "required"].includes(String(value.authRequirement))) issues.push({ path: "$.authRequirement", code: "invalid_value", message: "must equal none, optional, or required" });
   if (value.platforms === undefined) issues.push({ path: "$.platforms", code: "missing_field", message: "field is required" });
   else {
-    if (!Array.isArray(value.platforms) || value.platforms.length === 0 || value.platforms.some(item => item !== "web" && item !== "desktop")) {
-      issues.push({ path: "$.platforms", code: "invalid_value", message: "must contain web and/or desktop" });
+    const supportedPlatforms = new Set<MusicConnectorHost>(["web", "desktop", "ios", "android"]);
+    if (!Array.isArray(value.platforms) || value.platforms.length === 0 || value.platforms.some(item => typeof item !== "string" || !supportedPlatforms.has(item as MusicConnectorHost))) {
+      issues.push({ path: "$.platforms", code: "invalid_value", message: "must contain web, desktop, ios, and/or android" });
     } else if (new Set(value.platforms).size !== value.platforms.length) {
       issues.push({ path: "$.platforms", code: "duplicate_value", message: "must not contain duplicate hosts" });
     }
@@ -325,6 +333,19 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
       if (value.permissions.account !== undefined && typeof value.permissions.account !== "boolean") {
         issues.push({ path: "$.permissions.account", code: "invalid_type", message: "must be a boolean" });
       }
+      if (value.permissions.managedPlayback !== undefined) {
+        if (!isRecord(value.permissions.managedPlayback)) {
+          issues.push({ path: "$.permissions.managedPlayback", code: "invalid_type", message: "must be an object" });
+        } else {
+          hasUnknownFields(value.permissions.managedPlayback, MANAGED_PLAYBACK_FIELDS, "$.permissions.managedPlayback", issues);
+          const adapterIds = value.permissions.managedPlayback.adapterIds;
+          if (!Array.isArray(adapterIds) || adapterIds.length === 0 || adapterIds.some(adapterId => typeof adapterId !== "string" || !ID_PATTERN.test(adapterId))) {
+            issues.push({ path: "$.permissions.managedPlayback.adapterIds", code: "invalid_value", message: "must be a non-empty list of reviewed kebab-case adapter ids" });
+          } else if (new Set(adapterIds).size !== adapterIds.length) {
+            issues.push({ path: "$.permissions.managedPlayback.adapterIds", code: "duplicate_value", message: "must not contain duplicate adapter ids" });
+          }
+        }
+      }
       if (value.permissions.networkOrigins !== undefined) {
         if (!Array.isArray(value.permissions.networkOrigins)) {
           issues.push({ path: "$.permissions.networkOrigins", code: "invalid_type", message: "must be an array" });
@@ -377,7 +398,12 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
 
   const capabilities = Array.isArray(value.capabilities) ? value.capabilities : [];
   const hasLogin = capabilities.includes("login");
+  const hasManagedPlayback = capabilities.includes("managed-playback");
   const accountPermission = isRecord(value.permissions) && value.permissions.account === true;
+  const managedPlaybackPermission = isRecord(value.permissions)
+    && isRecord(value.permissions.managedPlayback)
+    && Array.isArray(value.permissions.managedPlayback.adapterIds)
+    && value.permissions.managedPlayback.adapterIds.length > 0;
   if (value.variant === "anonymous" && (value.authRequirement !== "none" || hasLogin)) {
     issues.push({ path: "$.variant", code: "invalid_value", message: "anonymous variants require authRequirement none and no login capability" });
   }
@@ -386,6 +412,9 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
   }
   if ((value.authRequirement === "optional" || value.authRequirement === "required") && !hasLogin) {
     issues.push({ path: "$.authRequirement", code: "invalid_value", message: "optional or required auth needs the login capability" });
+  }
+  if (hasManagedPlayback && (value.variant !== "account" || value.authRequirement !== "required" || !hasLogin || !accountPermission || !managedPlaybackPermission)) {
+    issues.push({ path: "$.capabilities", code: "invalid_value", message: "managed playback requires an account variant, required official login, and reviewed adapter ids" });
   }
 
   if (value.tags !== undefined && (!Array.isArray(value.tags) || value.tags.some(tag => typeof tag !== "string" || tag.trim() === ""))) {

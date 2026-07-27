@@ -1,5 +1,5 @@
 import type { MusicListQuery, MusicOrder, MusicStoreClientOptions, MusicTrack } from "./types";
-import type { MusicConnector, MusicLyrics, MusicSearchResult, MusicStreamInfo } from "./connector";
+import type { MusicConnector, MusicLyrics, MusicManagedPlayback, MusicSearchResult, MusicStreamInfo } from "./connector";
 import { MusicConnectorRegistry } from "./connector-registry";
 
 export class MusicStoreClient {
@@ -26,8 +26,16 @@ export class MusicStoreClient {
 
   async getStreamUrl(trackId: string): Promise<MusicStreamInfo | null> {
     const connector = this.connectors.active;
-    if (connector) {
+    if (connector?.getStreamUrl) {
       return connector.getStreamUrl(trackId);
+    }
+    return null;
+  }
+
+  async getManagedPlayback(trackId: string): Promise<MusicManagedPlayback | null> {
+    const connector = this.connectors.active;
+    if (connector?.getManagedPlayback) {
+      return connector.getManagedPlayback(trackId);
     }
     return null;
   }

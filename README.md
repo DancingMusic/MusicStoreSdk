@@ -96,7 +96,7 @@ tokens, API secrets, signing material, or mutable `@main` distribution URLs.
   "familyId": "example-music",
   "variant": "anonymous",
   "authRequirement": "none",
-  "platforms": ["web", "desktop"],
+  "platforms": ["web", "desktop", "ios", "android"],
   "name": "Example Music",
   "description": "Example connector.",
   "publisher": { "name": "Example" },
@@ -124,6 +124,12 @@ tokens, API secrets, signing material, or mutable `@main` distribution URLs.
 
 See [`openspec/SDK_OPENSPEC.md`](openspec/SDK_OPENSPEC.md) for the normative
 field and lifecycle requirements.
+
+Native platform declarations are opt-in and must reflect a reviewed login,
+playback, network and secure-storage path. Official DRM-backed connectors that
+use `managed-playback` must be account-only and declare the reviewed typed
+provider adapter ids in `permissions.managedPlayback`; this metadata never
+contains a media URL, token, Cookie, header or key.
 
 `artworkOrigins` contains exact HTTPS origins only. It lets a host normalize
 the connector's returned cover URLs for Canvas/WebGL without expanding the

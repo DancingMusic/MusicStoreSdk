@@ -54,6 +54,34 @@ describe("connector manifest validation", () => {
     expect(validateConnectorManifest(value)).toEqual({ valid: true, issues: [] });
   });
 
+  it("accepts explicitly reviewed native platforms", () => {
+    const value = manifest();
+    value.platforms = ["ios", "android"];
+
+    expect(validateConnectorManifest(value)).toEqual({ valid: true, issues: [] });
+  });
+
+  it("requires an account login and reviewed adapter ids for managed playback", () => {
+    const value = manifest("apple-music");
+    value.familyId = "apple-music";
+    value.variant = "account";
+    value.authRequirement = "required";
+    value.platforms = ["web", "ios", "android"];
+    value.capabilities = ["search", "login", "managed-playback"];
+    value.permissions = {
+      account: true,
+      managedPlayback: { adapterIds: ["apple-music"] },
+    };
+
+    expect(validateConnectorManifest(value)).toEqual({ valid: true, issues: [] });
+
+    delete value.permissions.managedPlayback;
+    expect(validateConnectorManifest(value).issues).toContainEqual(expect.objectContaining({
+      path: "$.capabilities",
+      code: "invalid_value",
+    }));
+  });
+
   it("accepts exact artwork origins and rejects unsafe or duplicate values", () => {
     const value = manifest();
     value.permissions = {

@@ -1,7 +1,7 @@
 # OpenSpec: MusicStore Connector Registry
 
 - Spec-ID: `music-store-registry-openspec`
-- Version: `3.2.1`
+- Version: `3.3.0`
 - Status: `Active`
 - Last-Updated: `2026-07-15`
 
@@ -38,6 +38,8 @@ Each registry record MUST declare:
 - `repository`: canonical HTTPS source repository;
 - `version`: immutable SemVer implementation version;
 - `protocolVersion`: supported MusicConnect protocol SemVer range;
+- `platforms`: one or more reviewed hosts from `web`, `desktop`, `ios`, and
+  `android`;
 - `capabilities`: only capabilities implemented by that release;
 - `artifact`: immutable HTTPS ESM entry URL and optional SHA-256 integrity;
 - `artifact.mirrors`: optional pinned `global` and `china` mirrors. The existing
@@ -56,6 +58,24 @@ mirror for each region.
 Optional `homepage`, `permissions`, and `tags` fields support discovery and
 host review. Unknown fields are rejected so typos cannot silently enter the
 distribution index.
+
+### Native and provider-managed playback declarations
+
+`ios` and `android` are native-host declarations, not aliases for `web`. A
+release MAY declare either mobile platform only after review confirms that its
+network, playback, login, secure storage and required provider bridge are
+implemented on that runtime. A browser-compatible ESM bundle alone is not
+evidence of native support.
+
+Official DRM-backed providers may declare the MusicConnect
+`managed-playback` capability. Such a record MUST be an account variant with
+`permissions.account: true` and a non-empty reviewed
+`permissions.managedPlayback.adapterIds` allowlist. The connector receives no
+exception to the ordinary secret policy: descriptors may not contain a stream
+URL, token, Cookie, header, key or arbitrary endpoint. A registry declaration
+does not grant permission to extract audio, synchronise lyrics or drive visual
+content; hosts leave those features off unless the provider has separately
+authorized them.
 
 `permissions.artworkOrigins` is an optional list of unique exact HTTPS origins
 (scheme, host, and optional port only). It authorizes a host-owned artwork
