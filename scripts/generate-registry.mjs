@@ -12,6 +12,7 @@ const outputPath = resolve(outputDirectory, "index.json");
 const schemaOutput = resolve(outputDirectory, "connector-manifest.schema.json");
 const officialCatalogOutput = resolve(root, "dist/official-catalog.json");
 const checkOnly = process.argv.includes("--check");
+const ISO_UTC_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
 const files = (await readdir(sourceDirectory))
   .filter(file => file.endsWith(".json"))
@@ -53,25 +54,43 @@ for (const field of Object.keys(officialProfile)) {
 if (officialProfile.schemaVersion !== 1 || officialProfile.id !== "official-connectors" || !Array.isArray(officialProfile.entries)) {
   throw new Error("profiles/official-catalog.json has an invalid schemaVersion, id, or entries");
 }
-if (typeof officialProfile.updatedAt !== "string" || Number.isNaN(Date.parse(officialProfile.updatedAt))) {
+if (typeof officialProfile.updatedAt !== "string" ||
+    !ISO_UTC_TIMESTAMP.test(officialProfile.updatedAt) ||
+    Number.isNaN(Date.parse(officialProfile.updatedAt))) {
   throw new Error("profiles/official-catalog.json updatedAt must be an ISO-8601 timestamp");
 }
 const manifestsById = new Map(connectors.map(manifest => [manifest.id, manifest]));
 const selectedIds = new Set();
-const officialConnectors = officialProfile.entries.map((entry, entryIndex) => {
+const profileEntries = officialProfile.entries.map((entry, entryIndex) => {
+  const allowedEntryFields = entry?.state === "withdraw"
+    ? new Set(["id", "version", "state", "reason", "at"])
+    : new Set(["id", "version", "state"]);
   if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
-      Object.keys(entry).some(field => field !== "id" && field !== "version") ||
-      typeof entry.id !== "string" || typeof entry.version !== "string") {
-    throw new Error(`profiles/official-catalog.json entries[${entryIndex}] must contain only id and version`);
+      Object.keys(entry).some(field => !allowedEntryFields.has(field)) ||
+      typeof entry.id !== "string" || typeof entry.version !== "string" ||
+      (entry.state !== "publish" && entry.state !== "withdraw")) {
+    throw new Error(`profiles/official-catalog.json entries[${entryIndex}] has an invalid id, version, state, or field`);
+  }
+  if (entry.state === "withdraw" &&
+      (typeof entry.reason !== "string" || !entry.reason.trim() || entry.reason.length > 500 ||
+       typeof entry.at !== "string" || !ISO_UTC_TIMESTAMP.test(entry.at) || Number.isNaN(Date.parse(entry.at)))) {
+    throw new Error(`profiles/official-catalog.json entries[${entryIndex}] withdrawal requires reason and at`);
   }
   if (selectedIds.has(entry.id)) throw new Error(`profiles/official-catalog.json duplicates ${entry.id}`);
   selectedIds.add(entry.id);
   const manifest = manifestsById.get(entry.id);
   if (!manifest) throw new Error(`official connector is not registered: ${entry.id}`);
-  if (manifest.status !== "active") throw new Error(`official connector is not active: ${entry.id}`);
   if (manifest.version !== entry.version) throw new Error(`official connector ${entry.id} expects ${entry.version}, registry has ${manifest.version}`);
-  return manifest;
-}).sort((left, right) => left.id.localeCompare(right.id));
+  if (entry.state === "publish" && manifest.status !== "active") {
+    throw new Error(`official connector is not active: ${entry.id}`);
+  }
+  return { entry, manifest };
+});
+const officialConnectors = profileEntries
+  .filter(({ entry }) => entry.state === "publish")
+  .map(({ manifest }) => manifest)
+  .sort((left, right) => left.id.localeCompare(right.id));
+const withdrawalCount = profileEntries.filter(({ entry }) => entry.state === "withdraw").length;
 const officialCatalog = {
   schemaVersion: 1,
   generatedAt: officialProfile.updatedAt,
@@ -87,4 +106,4 @@ if (!checkOnly) {
   await writeFile(officialCatalogOutput, `${JSON.stringify(officialCatalog, null, 2)}\n`);
 }
 
-console.log(`${checkOnly ? "Validated" : "Generated"} ${connectors.length} connector manifests and ${officialConnectors.length} official connectors${checkOnly ? "" : ` at ${outputPath}`}.`);
+console.log(`${checkOnly ? "Validated" : "Generated"} ${connectors.length} connector manifests, ${officialConnectors.length} published official connectors, and ${withdrawalCount} withdrawals${checkOnly ? "" : ` at ${outputPath}`}.`);

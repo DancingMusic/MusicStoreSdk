@@ -136,8 +136,14 @@ MUST NOT contain signing keys or private Git credentials.
 Registry presence does not imply official distribution. The official connector
 source is an explicit exact-version allowlist in
 `profiles/official-catalog.json`; StoreService signs only the generated
-`dist/official-catalog.json`. An empty profile is valid and publishes an empty
-official catalog while retaining manifests as compatibility and review history.
+`dist/official-catalog.json`. Every profile entry declares an exact id/version
+and a generic lifecycle `state`. `publish` requires an active manifest and
+includes it in the generated payload. `withdraw` requires an audit reason and
+timestamp, excludes the implementation from the public payload, and is emitted
+to StoreService as private lifecycle-control metadata. The generated publish
+input always includes a deterministic `withdrawals` array. An empty profile is
+valid and publishes an empty official catalog while retaining manifests as
+compatibility and review history.
 
 ## Compatibility
 

@@ -2,6 +2,27 @@
   "$schema": "../registry/schema/official-catalog.schema.json",
   "schemaVersion": 1,
   "id": "official-connectors",
-  "entries": [],
+  "entries": [
+    {
+      "id": "netease-cloud-music",
+      "version": "0.5.4",
+      "state": "publish"
+    },
+    {
+      "id": "netease-cloud-music-account",
+      "version": "0.3.1",
+      "state": "publish"
+    },
+    {
+      "id": "qq-music",
+      "version": "0.5.5",
+      "state": "publish"
+    },
+    {
+      "id": "qq-music-account",
+      "version": "0.4.2",
+      "state": "publish"
+    }
+  ],
   "updatedAt": "2026-08-01T00:00:00.000Z"
 }

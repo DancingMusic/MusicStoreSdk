@@ -11,10 +11,10 @@
   "repository": "https://github.com/DancingMusic/MusicConnect-NetEase",
   "homepage": "https://dancingmusic.github.io/MusicConnect-NetEase/",
   "license": "MIT",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "protocolVersion": ">=0.2.0",
   "capabilities": ["search", "stream", "lyrics", "playlist"],
-  "artifact": { "url": "https://cdn.jsdelivr.net/gh/DancingMusic/MusicConnect-NetEase@v0.5.3/dist/index.js", "format": "esm", "integrity": "sha256-P9zdKio45DxFur00AwjggWaNiTFmwjvtLqs4Ks/YEHU=" },
+  "artifact": { "url": "https://cdn.jsdelivr.net/gh/DancingMusic/MusicConnect-NetEase@v0.5.4/dist/index.js", "format": "esm", "integrity": "sha256-Tw81IjR+Fb79uzUAhqXUj8tt63kuEhVU1yCDsgpNjBU=" },
   "permissions": {
     "networkOrigins": [],
     "artworkOrigins": [
@@ -29,5 +29,5 @@
   "tags": ["netease", "anonymous", "self-hosted-gateway", "lyrics", "playlist"],
   "status": "active",
   "submittedAt": "2026-06-11T00:00:00.000Z",
-  "updatedAt": "2026-07-16T00:00:00.000Z"
+  "updatedAt": "2026-08-01T00:00:00.000Z"
 }

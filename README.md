@@ -103,8 +103,12 @@ protected release environment; private Git credentials never enter this repo.
 Registry manifests are review/history metadata and do not automatically enter
 the official source. Only exact active versions selected by
 `profiles/official-catalog.json` are emitted into `dist/official-catalog.json`
-and the StoreService publish input. The initial official connector profile is
-intentionally empty until a connector passes product and distribution review.
+and the StoreService publish input. Each profile entry has a generic `state`:
+`publish` includes the exact active version, while `withdraw` excludes it from
+the signed public payload and requires an audit `reason` and timestamp `at`.
+The generated StoreService input always carries a deterministic `withdrawals`
+array, including when it is empty. A manifest remains review/history metadata
+after withdrawal and can be republished only through a later profile change.
 
 ## Manifest v1
 
