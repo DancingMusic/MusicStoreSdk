@@ -21,7 +21,8 @@
 ## Milestone C — Automation and maintenance
 
 - [x] Run typecheck, tests, registry validation, and build in CI.
-- [ ] Add automated artifact reachability and integrity verification.
+- [x] Add automated artifact reachability and integrity verification.
+- [x] Generate deterministic unsigned StoreService publish input in CI.
 - [ ] Define a reviewed deprecation/removal policy and migration window.
 - [ ] Move protocol compatibility exports to `MusicConnect` after host and all
   connectors have migrated; removal requires a separate major release.

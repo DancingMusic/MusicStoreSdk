@@ -21,11 +21,16 @@ npm install github:DancingMusic/MusicStore
 ```text
 registry/
 ├── manifests/                         # reviewed source records
-└── schema/connector-manifest.schema.json
+└── schema/                             # manifest and official-profile schemas
+
+profiles/official-catalog.json          # exact allowlist for the official source
 
 dist/registry/
 ├── index.json                         # generated public connector index
 └── connector-manifest.schema.json
+
+dist/store-service-publish.json        # deterministic unsigned StoreService input
+dist/official-catalog.json              # generated official connector payload
 ```
 
 The generated index is sorted by connector ID and uses pinned release artifact
@@ -43,6 +48,8 @@ npm run typecheck
 npm test
 npm run validate:registry
 npm run build
+npm run store-service:check
+npm run release:prepare
 ```
 
 ## Discover manifests in code
@@ -86,6 +93,18 @@ instances inside a host process.
 Reviewers verify repository ownership, license, protocol compatibility,
 capabilities, permissions, the pinned artifact URL, and its SHA-256 integrity. Never submit cookies,
 tokens, API secrets, signing material, or mutable `@main` distribution URLs.
+
+`npm run release:prepare` builds the Registry, verifies every bounded remote
+artifact without following redirects, and emits a deterministic unsigned
+`dist/store-service-publish.json`. The file contains only public artifact
+metadata and hashes. StoreService adds sequence, expiry and signature in the
+protected release environment; private Git credentials never enter this repo.
+
+Registry manifests are review/history metadata and do not automatically enter
+the official source. Only exact active versions selected by
+`profiles/official-catalog.json` are emitted into `dist/official-catalog.json`
+and the StoreService publish input. The initial official connector profile is
+intentionally empty until a connector passes product and distribution review.
 
 ## Manifest v1
 

@@ -6,9 +6,11 @@ import { assertConnectorManifest, ConnectorManifestRegistry } from "../dist/inde
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const sourceDirectory = resolve(root, "registry/manifests");
 const schemaSource = resolve(root, "registry/schema/connector-manifest.schema.json");
+const officialCatalogSource = resolve(root, "profiles/official-catalog.json");
 const outputDirectory = resolve(root, "dist/registry");
 const outputPath = resolve(outputDirectory, "index.json");
 const schemaOutput = resolve(outputDirectory, "connector-manifest.schema.json");
+const officialCatalogOutput = resolve(root, "dist/official-catalog.json");
 const checkOnly = process.argv.includes("--check");
 
 const files = (await readdir(sourceDirectory))
@@ -40,11 +42,49 @@ const index = {
   connectors,
 };
 
+const officialProfile = JSON.parse(await readFile(officialCatalogSource, "utf8"));
+const profileFields = new Set(["$schema", "schemaVersion", "id", "entries", "updatedAt"]);
+if (!officialProfile || typeof officialProfile !== "object" || Array.isArray(officialProfile)) {
+  throw new Error("profiles/official-catalog.json must be an object");
+}
+for (const field of Object.keys(officialProfile)) {
+  if (!profileFields.has(field)) throw new Error(`profiles/official-catalog.json: unknown field ${field}`);
+}
+if (officialProfile.schemaVersion !== 1 || officialProfile.id !== "official-connectors" || !Array.isArray(officialProfile.entries)) {
+  throw new Error("profiles/official-catalog.json has an invalid schemaVersion, id, or entries");
+}
+if (typeof officialProfile.updatedAt !== "string" || Number.isNaN(Date.parse(officialProfile.updatedAt))) {
+  throw new Error("profiles/official-catalog.json updatedAt must be an ISO-8601 timestamp");
+}
+const manifestsById = new Map(connectors.map(manifest => [manifest.id, manifest]));
+const selectedIds = new Set();
+const officialConnectors = officialProfile.entries.map((entry, entryIndex) => {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
+      Object.keys(entry).some(field => field !== "id" && field !== "version") ||
+      typeof entry.id !== "string" || typeof entry.version !== "string") {
+    throw new Error(`profiles/official-catalog.json entries[${entryIndex}] must contain only id and version`);
+  }
+  if (selectedIds.has(entry.id)) throw new Error(`profiles/official-catalog.json duplicates ${entry.id}`);
+  selectedIds.add(entry.id);
+  const manifest = manifestsById.get(entry.id);
+  if (!manifest) throw new Error(`official connector is not registered: ${entry.id}`);
+  if (manifest.status !== "active") throw new Error(`official connector is not active: ${entry.id}`);
+  if (manifest.version !== entry.version) throw new Error(`official connector ${entry.id} expects ${entry.version}, registry has ${manifest.version}`);
+  return manifest;
+}).sort((left, right) => left.id.localeCompare(right.id));
+const officialCatalog = {
+  schemaVersion: 1,
+  generatedAt: officialProfile.updatedAt,
+  connectorCount: officialConnectors.length,
+  connectors: officialConnectors,
+};
+
 if (!checkOnly) {
   await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(outputDirectory, { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(index, null, 2)}\n`);
   await writeFile(schemaOutput, await readFile(schemaSource));
+  await writeFile(officialCatalogOutput, `${JSON.stringify(officialCatalog, null, 2)}\n`);
 }
 
-console.log(`${checkOnly ? "Validated" : "Generated"} ${connectors.length} connector manifests${checkOnly ? "" : ` at ${outputPath}`}.`);
+console.log(`${checkOnly ? "Validated" : "Generated"} ${connectors.length} connector manifests and ${officialConnectors.length} official connectors${checkOnly ? "" : ` at ${outputPath}`}.`);

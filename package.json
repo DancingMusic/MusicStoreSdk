@@ -21,12 +21,15 @@
   ],
   "scripts": {
     "build:package": "tsup src/index.ts --format esm,cjs --dts --clean",
-    "build": "npm run build:package && node scripts/generate-registry.mjs",
+    "build": "npm run build:package && node scripts/generate-registry.mjs && npm run store-service:generate",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "validate:registry": "npm run build:package && node scripts/generate-registry.mjs --check",
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
+    "store-service:generate": "node scripts/generate-store-service-publish.mjs",
+    "store-service:check": "node scripts/generate-store-service-publish.mjs --check",
+    "release:prepare": "npm run build && npm run store-service:check && npm run verify:artifacts",
     "check": "npm run typecheck && npm test && npm run build",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build"

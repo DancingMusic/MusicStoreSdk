@@ -28,7 +28,13 @@ jobs:
         run: npm run check
 
       - name: Verify generated registry artifact exists
-        run: test -f dist/registry/index.json
+        run: |
+          test -f dist/registry/index.json
+          test -f dist/official-catalog.json
+          test -f dist/store-service-publish.json
+
+      - name: Verify deterministic StoreService publish input
+        run: npm run store-service:check
 
       - name: Verify every published connector artifact against SRI
         run: npm run verify:artifacts

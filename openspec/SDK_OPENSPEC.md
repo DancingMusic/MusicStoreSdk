@@ -1,9 +1,9 @@
 # OpenSpec: MusicStore Connector Registry
 
 - Spec-ID: `music-store-registry-openspec`
-- Version: `3.2.1`
+- Version: `3.3.0`
 - Status: `Active`
-- Last-Updated: `2026-07-15`
+- Last-Updated: `2026-08-01`
 
 ## Scope
 
@@ -17,6 +17,8 @@ MusicStore owns:
 - validation rules for submitted manifests;
 - the curated source registry under `registry/manifests/`;
 - deterministic generation of `dist/registry/index.json`;
+- schema-validated `profiles/official-catalog.json` and deterministic
+  generation of the exact-version official catalog payload;
 - a typed in-memory manifest registry for hosts and third-party tooling;
 - submission guidance and CI checks for registry changes.
 
@@ -106,6 +108,10 @@ a declared, trusted and bounded credential-processing path.
    distribution index.
 5. Reviewers verify repository ownership, permissions, immutable artifact URL,
    declared capabilities, license, and protocol compatibility.
+6. The protected release workflow imports every accepted artifact into the
+   official StoreService content-addressed cache, verifies the published bytes,
+   signs the deterministic catalog envelope, and publishes it to the official
+   connector catalog endpoint.
 
 Artwork review additionally verifies that each declared origin is used by the
 implementation's returned cover URLs and that the implementation does not put
@@ -114,6 +120,24 @@ metadata rather than connector runtime self-declarations.
 
 Registry acceptance is metadata curation, not permission to copy implementation
 source into MusicStore.
+
+The Git registry remains the source of truth. Private immutable Git release or
+package assets may be used as the cold artifact source, but their URL and access
+credential MUST NOT appear in the public manifest. The public `artifact.url`
+and mirrors point to immutable StoreService paths after successful import.
+
+The released catalog is wrapped by StoreService with numeric `schemaVersion`,
+`algorithm: ES256`, `keyId`, `payloadKind`, a monotonic `sequence`, `issuedAt`,
+`expiresAt`, the validated registry `payload`, and a base64url IEEE-P1363
+`signature` over canonical JSON of every preceding field. Signing
+keys live in protected CI/KMS. MusicStore source, generated output and logs
+MUST NOT contain signing keys or private Git credentials.
+
+Registry presence does not imply official distribution. The official connector
+source is an explicit exact-version allowlist in
+`profiles/official-catalog.json`; StoreService signs only the generated
+`dist/official-catalog.json`. An empty profile is valid and publishes an empty
+official catalog while retaining manifests as compatibility and review history.
 
 ## Compatibility
 

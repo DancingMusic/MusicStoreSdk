@@ -1,0 +1,7 @@
+{
+  "$schema": "../registry/schema/official-catalog.schema.json",
+  "schemaVersion": 1,
+  "id": "official-connectors",
+  "entries": [],
+  "updatedAt": "2026-08-01T00:00:00.000Z"
+}

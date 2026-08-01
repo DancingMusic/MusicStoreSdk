@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'registry/**'
+      - 'profiles/**'
       - 'src/**'
       - 'scripts/**'
       - 'package.json'
@@ -45,6 +46,7 @@ jobs:
           mkdir -p public/registry
           cp -R docs/. public/
           cp -R dist/registry/. public/registry/
+          cp dist/official-catalog.json public/registry/official-catalog.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
