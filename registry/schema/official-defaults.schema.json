@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/DancingMusic/MusicStore/main/registry/schema/official-defaults.schema.json",
+  "title": "MusicStore Official Defaults Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "channel", "revision", "defaultConnectorId", "connectors", "updatedAt"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1" },
+    "id": { "const": "official-defaults" },
+    "channel": { "enum": ["stable", "beta"] },
+    "revision": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$" },
+    "defaultConnectorId": { "$ref": "#/$defs/id" },
+    "connectors": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/connector" } },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "connector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "order", "installMode", "updatePolicy"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$" },
+        "order": { "type": "integer", "minimum": 0 },
+        "installMode": { "enum": ["preinstalled", "recommended"] },
+        "updatePolicy": { "const": "notify" }
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ import type { MusicConnectorCapability } from "./connector";
 import type { MusicConnectorAuthRequirement, MusicConnectorHost, MusicConnectorVariant } from "./connector";
 
 export const CONNECTOR_MANIFEST_SCHEMA_VERSION = 1 as const;
+export const OFFICIAL_CONNECTOR_DEFAULTS_SCHEMA_VERSION = "1" as const;
 
 export type ConnectorManifestStatus = "active" | "deprecated" | "unlisted";
 
@@ -60,6 +61,30 @@ export interface ConnectorManifest {
   tags?: string[];
   status: ConnectorManifestStatus;
   submittedAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A reviewed release profile for the connectors a host may package offline.
+ * It deliberately references immutable manifest versions instead of copying
+ * artifact URLs or permissions into a second source of truth.
+ */
+export interface OfficialDefaultConnector {
+  id: string;
+  version: string;
+  order: number;
+  installMode: "preinstalled" | "recommended";
+  updatePolicy: "notify";
+}
+
+export interface OfficialConnectorDefaultsProfile {
+  $schema?: string;
+  schemaVersion: typeof OFFICIAL_CONNECTOR_DEFAULTS_SCHEMA_VERSION;
+  id: "official-defaults";
+  channel: "stable" | "beta";
+  revision: string;
+  defaultConnectorId: string;
+  connectors: OfficialDefaultConnector[];
   updatedAt: string;
 }
 
@@ -418,4 +443,57 @@ export function validateConnectorManifest(value: unknown): ConnectorManifestVali
 export function assertConnectorManifest(value: unknown): asserts value is ConnectorManifest {
   const result = validateConnectorManifest(value);
   if (!result.valid) throw new ConnectorManifestValidationError(result.issues);
+}
+
+function isProfileRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Validates profile shape plus its exact references into the reviewed registry. */
+export function assertOfficialConnectorDefaultsProfile(
+  value: unknown,
+  manifests: readonly ConnectorManifest[],
+): asserts value is OfficialConnectorDefaultsProfile {
+  if (!isProfileRecord(value)) throw new Error("Official connector defaults profile must be an object");
+  const allowed = new Set(["$schema", "schemaVersion", "id", "channel", "revision", "defaultConnectorId", "connectors", "updatedAt"]);
+  for (const key of Object.keys(value)) if (!allowed.has(key)) throw new Error(`Official connector defaults profile field is not allowed: ${key}`);
+  if (value.schemaVersion !== OFFICIAL_CONNECTOR_DEFAULTS_SCHEMA_VERSION) throw new Error("Official connector defaults schemaVersion must equal 1");
+  if (value.id !== "official-defaults") throw new Error("Official connector defaults id must equal official-defaults");
+  if (value.channel !== "stable" && value.channel !== "beta") throw new Error("Official connector defaults channel must equal stable or beta");
+  if (typeof value.revision !== "string" || !SEMVER_PATTERN.test(value.revision)) throw new Error("Official connector defaults revision must be SemVer");
+  if (typeof value.updatedAt !== "string" || Number.isNaN(Date.parse(value.updatedAt))) throw new Error("Official connector defaults updatedAt must be an ISO timestamp");
+  if (!Array.isArray(value.connectors) || value.connectors.length === 0) throw new Error("Official connector defaults connectors must be a non-empty array");
+
+  const byId = new Map(manifests.map(manifest => [manifest.id, manifest]));
+  const ids = new Set<string>();
+  const orders = new Set<number>();
+  for (const [index, entry] of value.connectors.entries()) {
+    if (!isProfileRecord(entry)) throw new Error(`Official connector default at index ${index} must be an object`);
+    const entryAllowed = new Set(["id", "version", "order", "installMode", "updatePolicy"]);
+    for (const key of Object.keys(entry)) if (!entryAllowed.has(key)) throw new Error(`Official connector default ${index} field is not allowed: ${key}`);
+    const entryId = entry.id;
+    const entryVersion = entry.version;
+    const entryOrder = entry.order;
+    if (typeof entryId !== "string" || !ID_PATTERN.test(entryId)) throw new Error(`Official connector default at index ${index} has an invalid id`);
+    if (typeof entryVersion !== "string" || !SEMVER_PATTERN.test(entryVersion)) throw new Error(`Official connector default ${entryId} has an invalid version`);
+    if (typeof entryOrder !== "number" || !Number.isInteger(entryOrder) || entryOrder < 0 || orders.has(entryOrder)) throw new Error(`Official connector default ${entryId} has a duplicate or invalid order`);
+    if (entry.installMode !== "preinstalled" && entry.installMode !== "recommended") throw new Error(`Official connector default ${entryId} has an invalid installMode`);
+    if (entry.updatePolicy !== "notify") throw new Error(`Official connector default ${entryId} must use notify updates`);
+    if (ids.has(entryId)) throw new Error(`Duplicate official connector default id: ${entryId}`);
+    ids.add(entryId);
+    orders.add(entryOrder);
+    const manifest = byId.get(entryId);
+    if (!manifest) throw new Error(`Official connector default is not registered: ${entryId}`);
+    if (manifest.status !== "active") throw new Error(`Official connector default is not active: ${entryId}`);
+    if (manifest.version !== entryVersion) throw new Error(`Official connector default ${entryId} expects ${entryVersion}, registry has ${manifest.version}`);
+  }
+  if (typeof value.defaultConnectorId !== "string" || !ids.has(value.defaultConnectorId)) throw new Error("defaultConnectorId must reference a profile connector");
+}
+
+export function buildOfficialConnectorDefaultsProfile(
+  profile: OfficialConnectorDefaultsProfile,
+  manifests: readonly ConnectorManifest[],
+): OfficialConnectorDefaultsProfile {
+  assertOfficialConnectorDefaultsProfile(profile, manifests);
+  return { ...profile, connectors: [...profile.connectors].sort((a, b) => a.order - b.order) };
 }

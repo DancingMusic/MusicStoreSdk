@@ -11,11 +11,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./registry.json": "./dist/registry/index.json",
+    "./official-defaults.json": "./dist/official-defaults.json",
+    "./official-defaults.schema.json": "./registry/schema/official-defaults.schema.json"
   },
   "files": [
     "dist",
-    "registry/schema",
+    "registry",
     "README.md",
     "LICENSE"
   ],
@@ -25,7 +28,7 @@
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "validate:registry": "npm run build:package && node scripts/generate-registry.mjs --check",
+    "validate:registry": "npm run build:package && node scripts/generate-registry.mjs && node scripts/generate-registry.mjs --check",
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
     "check": "npm run typecheck && npm test && npm run build",
     "prepare": "npm run build",

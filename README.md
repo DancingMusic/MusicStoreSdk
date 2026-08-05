@@ -26,6 +26,9 @@ registry/
 dist/registry/
 ├── index.json                         # generated public connector index
 └── connector-manifest.schema.json
+
+profiles/official-defaults.json          # reviewed packaged-default policy
+dist/official-defaults.json              # generated validated snapshot
 ```
 
 The generated index is sorted by connector ID and uses pinned release artifact
@@ -35,6 +38,12 @@ URLs. Run the complete validation pipeline with:
 npm ci
 npm run check
 ```
+
+`profiles/official-defaults.json` contains only exact IDs and versions already
+reviewed in the Registry. `preinstalled` lets a Release package embed that
+artifact as an offline seed; it never copies implementation source into the
+host. Hosts keep the user's local follow-packaged-presets preference and must
+ask before applying a `notify` update.
 
 Useful focused commands:
 

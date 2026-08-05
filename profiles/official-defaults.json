@@ -1,0 +1,14 @@
+{
+  "$schema": "../registry/schema/official-defaults.schema.json",
+  "schemaVersion": "1",
+  "id": "official-defaults",
+  "channel": "stable",
+  "revision": "1.0.0",
+  "defaultConnectorId": "itunes",
+  "connectors": [
+    { "id": "itunes", "version": "0.5.2", "order": 0, "installMode": "preinstalled", "updatePolicy": "notify" },
+    { "id": "internet-archive", "version": "0.4.2", "order": 10, "installMode": "preinstalled", "updatePolicy": "notify" },
+    { "id": "radio-browser", "version": "0.1.3", "order": 20, "installMode": "preinstalled", "updatePolicy": "notify" }
+  ],
+  "updatedAt": "2026-08-05T00:00:00.000Z"
+}

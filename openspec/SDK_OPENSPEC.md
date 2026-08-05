@@ -24,6 +24,22 @@ MusicStore does not own connector protocol types or concrete platform source.
 The protocol belongs to `MusicConnect`; implementations remain in independent
 `MusicConnect-*` repositories.
 
+## Official defaults profile
+
+`profiles/official-defaults.json` is the reviewed packaging policy for an
+official connector set. It references only `active` registry manifests at an
+exact version; the generated `dist/official-defaults.json` is the immutable
+snapshot consumed by release packaging. Each entry declares its presentation
+order, `preinstalled` or `recommended` role, and the currently required
+`notify` update interaction.
+
+The profile never duplicates artifact URLs, permissions, credentials, or
+implementation code. Release packaging resolves those fields from the pinned
+manifest, verifies its declared integrity, and embeds the resulting artifact
+bytes only in the application package. A host-local management preference may
+choose whether to follow a packaged profile; disabling it must not delete
+manual installations or cause later automatic restoration.
+
 Long-form documentation is published by `DancingMusic/docs` at
 `https://dancingmusic.github.io/docs/ecosystem/stores`. This repository keeps
 the schema and registry source of truth; its legacy Pages root only redirects.

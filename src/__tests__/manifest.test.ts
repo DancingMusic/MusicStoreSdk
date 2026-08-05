@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   assertConnectorManifest,
+  assertOfficialConnectorDefaultsProfile,
+  buildOfficialConnectorDefaultsProfile,
   ConnectorManifestRegistry,
   ConnectorManifestValidationError,
   validateConnectorManifest,
@@ -200,5 +202,36 @@ describe("ConnectorManifestRegistry", () => {
     if (!copy) throw new Error("expected manifest");
     copy.name = "Mutated";
     expect(registry.get("example")?.name).toBe("Example connector");
+  });
+});
+
+describe("official connector defaults profile", () => {
+  const profile = () => ({
+    schemaVersion: "1" as const,
+    id: "official-defaults" as const,
+    channel: "stable" as const,
+    revision: "1.0.0",
+    defaultConnectorId: "archive",
+    connectors: [
+      { id: "radio", version: "1.2.3", order: 10, installMode: "recommended" as const, updatePolicy: "notify" as const },
+      { id: "archive", version: "1.2.3", order: 0, installMode: "preinstalled" as const, updatePolicy: "notify" as const },
+    ],
+    updatedAt: "2026-08-05T00:00:00.000Z",
+  });
+
+  it("cross-checks immutable active manifests and sorts by explicit order", () => {
+    const manifests = [manifest("archive"), manifest("radio")];
+    expect(() => assertOfficialConnectorDefaultsProfile(profile(), manifests)).not.toThrow();
+    expect(buildOfficialConnectorDefaultsProfile(profile(), manifests).connectors.map(item => item.id)).toEqual(["archive", "radio"]);
+  });
+
+  it("rejects unreviewed, mismatched, duplicate, and silent-update entries", () => {
+    const manifests = [manifest("archive")];
+    const invalid = profile();
+    invalid.connectors = [
+      { id: "archive", version: "9.9.9", order: 0, installMode: "preinstalled", updatePolicy: "notify" },
+      { id: "archive", version: "1.2.3", order: 0, installMode: "recommended", updatePolicy: "silent" as "notify" },
+    ];
+    expect(() => assertOfficialConnectorDefaultsProfile(invalid, manifests)).toThrow();
   });
 });
